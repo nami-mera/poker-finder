@@ -3,42 +3,29 @@ import os
 import json
 from pathlib import Path
 import urllib.parse
+import logging
 
 from data_crawler import crawl_shop_details, crawl_tournament_details, crawl_init_links
 from data_process_to_json import extract_json
 
-from db_models import Tournament, Shop
-from db_utils_orm import MySQLHelper
+from models.tournament_model import Tournament
+from models.shop_model import Shop
 
+def init_logging():
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
 
-MYSQL_CONF_MAP = {
-    'TEST':{
-        "host": "0.0.0.0",
-        "port": 3306,
-        "user": "root",
-        "passwd": "root",
-        "db": "test",
-    },
-    'ONLINE': {
-        "host": "0.0.0.0",
-        "port": 3306,
-        "user": "root",
-        "passwd": "root",
-        "db": "test",
-    }
-}
+# 初始化日志
+init_logging()
 
 # 从环境变量获取环境信息
 env = os.getenv('ENV', 'TEST').upper()
-print(f"当前环境: {env}")
+logging.info(f"当前环境: {env}")
+DATA_PATH = "./data"
 
-db_helper = MySQLHelper(
-    user=MYSQL_CONF_MAP.get(env)["user"],
-    password=MYSQL_CONF_MAP.get(env)["passwd"],
-    host=MYSQL_CONF_MAP.get(env)["host"],
-    port=MYSQL_CONF_MAP.get(env)["port"],
-    database=MYSQL_CONF_MAP.get(env)["db"]
-)
 
 
 def save_to_file(data, file_path):
@@ -62,7 +49,7 @@ def process_shop_details_to_json(shop_details):
         json_data['shop_link'] = detail.url
         json_data['map_link'] = urllib.parse.unquote(json_data.get('map_link', ''))
         # 保存原始的json格式文件
-        save_to_file(json_data, f'py-script/data/shop/{file_name}')
+        save_to_file(json_data, DATA_PATH + f'/shop/{file_name}')
 
 
 def process_tournament_details_to_json(tournament_details):
@@ -70,29 +57,27 @@ def process_tournament_details_to_json(tournament_details):
         md_data = detail.markdown
         file_name = detail.url.split('/')[-1]
         # 保存原始的md文件
-        save_to_file(md_data, f'py-script/data/tournament/md/{file_name}')
+        save_to_file(md_data, DATA_PATH + f'/tournament/md/{file_name}')
         # 使用ai接口，提取json格式内容
         json_data = extract_json(md_data)
+        logging.info(f"extract_json, file_name: {file_name}")
         json_data = json.loads(json_data)
         if not json_data:
             continue
         json_data['event_id'] = int(file_name)
         json_data['event_link'] = detail.url
-        # 保存json格式文件
-        save_to_file(json_data, f'py-script/data/tournament/json/{file_name}')
+        save_to_file(json_data, DATA_PATH + f'/tournament/json/{file_name}')
 
 
-# 保存shop数据到数据库
 def save_shop_to_db():
-    shop_ids = scan_file_ids("py-script/data/shop/")
-    print('exits_shop_ids: ' + str(len(shop_ids)))
+    shop_ids = scan_file_ids(DATA_PATH + "/shop/")
+    logging.info('exits_shop_ids: ' + str(len(shop_ids)))
     for id in shop_ids:
-        existing = db_helper.query_filter(Shop, shop_id=id)
+        existing = Shop.query.filter_by(shop_id=id).first()
         if existing:
-            print(f"ℹ️ 商店数据已存在: {id}")
+            logging.info(f"ℹ️ 商店数据已存在: {id}")
             continue
-
-        with open(f'py-script/data/shop/{id}', 'r', encoding='utf-8') as f:
+        with open(DATA_PATH + f'/shop/{id}', 'r', encoding='utf-8') as f:
             json_data = f.read()
             if not json_data:
                 continue
@@ -107,20 +92,18 @@ def save_shop_to_db():
                 homepage = json_obj.get('homepage', ''),
                 business_hours = json_obj.get('business_hours', '')
             )
-            db_helper.add(shop)
-        print(f"✅ 新增商店数据: {id}")
-
+            Shop.add(shop)
+        logging.info(f"✅ 新增商店数据: {id}")
 
 def save_tournament_to_db():
-    tourney_ids = scan_file_ids("py-script/data/tournament/json/")
-    print('exits_tourney_ids: ' + str(len(tourney_ids)))
+    tourney_ids = scan_file_ids(DATA_PATH + "/tournament/json/")
+    logging.info('exits_tourney_ids: ' + str(len(tourney_ids)))
     for id in tourney_ids:
-        existing = db_helper.query_filter(Tournament, event_id=id)
+        existing = Tournament.query.filter_by(event_id=id).first()
         if existing:
-            print(f"ℹ️ 赛事数据已存在: {id}")
+            logging.info(f"ℹ️ 赛事数据已存在: {id}")
             continue
-
-        with open(f'py-script/data/tournament/json/{id}', 'r', encoding='utf-8') as f:
+        with open(DATA_PATH + f'/tournament/json/{id}', 'r', encoding='utf-8') as f:
             json_data = f.read()
             if not json_data:
                 continue
@@ -148,11 +131,10 @@ def save_tournament_to_db():
                 reward_categories = ','.join(json_obj.get('prizes_analyze', {}).get('reward_categories', [])),
                 rank_list = json.dumps(json_obj.get('prizes_analyze', {}).get('rank_list', []), ensure_ascii=False)
             )
-            db_helper.add(tournament)
-        print(f"✅ 新增赛事数据: {id}")
+            Tournament.add(tournament)
+        logging.info(f"✅ 新增赛事数据: {id}")
 
 
-# 扫描文件夹下的文件名列表
 def scan_file_ids(folder_path):
     return [f.name for f in Path(folder_path).iterdir() if f.is_file()]
 
@@ -160,20 +142,14 @@ def scan_file_ids(folder_path):
 async def main():
     init_all_shop = False
     init_all_tournament = False
-
-    # 已保存的shop信息
-    saved_shop_ids = scan_file_ids("py-script/data/shop/")
-    print('saved_shop_ids: ' + str(len(saved_shop_ids)))
-    # 已保存的tournament信息
-    saved_tourney_ids = scan_file_ids("py-script/data/tournament/json/")
-    print('saved_tourney_ids: ' + str(len(saved_tourney_ids)))
-
-    # 爬取tourney和shop的链接
+    saved_shop_ids = scan_file_ids(DATA_PATH + "/shop/")
+    logging.info('saved_shop_ids: ' + str(len(saved_shop_ids)))
+    saved_tourney_ids = scan_file_ids(DATA_PATH + "/tournament/json/")
+    logging.info('saved_tourney_ids: ' + str(len(saved_tourney_ids)))
     tourney_links, shop_links = await crawl_init_links()
-    print('tourney_links: ' + str(len(tourney_links)))
-    print('shop_links: ' + str(len(shop_links)))
+    logging.info('tourney_links: ' + str(len(tourney_links)))
+    logging.info('shop_links: ' + str(len(shop_links)))
 
-    #判断哪些是新的链接，仅处理新链接 
     new_shop_links = []
     if init_all_shop:
         new_shop_links = shop_links
@@ -189,18 +165,13 @@ async def main():
             if link.split("/")[-1] not in saved_tourney_ids:
                 new_tourney_links.append(link)
 
-    # 爬取新的shop和tournament详情
-    # shop_details = await crawl_shop_details(new_shop_links)
-    # process_shop_details_to_json(shop_details)
-    tourney_details = await crawl_tournament_details(new_tourney_links)
+
+    shop_details = await crawl_shop_details(new_shop_links[:10])
+    process_shop_details_to_json(shop_details)
+    tourney_details = await crawl_tournament_details(new_tourney_links[:10])
     process_tournament_details_to_json(tourney_details)
 
     save_shop_to_db()
     save_tournament_to_db()
-
-
 if __name__ == "__main__":
     asyncio.run(main())
-
-
-

@@ -2,6 +2,7 @@
 from openai import OpenAI
 import os
 from glob import glob
+import logging
 
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
@@ -49,10 +50,13 @@ SYSTEM_PROMPT = """
 **分析情報（新規追加）**  
 - prizes_analyze: 賞品データの要約と分析結果  
   - total_winners: 入賞人数（prizes 内の rank 数）  
-  - total_value_jpy: 総賞金額（Coin 等を換算して合計、ticket/other換算不能は0円扱い）  
+  - total_value_jpy: 総賞金額（Coin,割引券等を換算して合計、チケット/otherは換算対象外）  
   - reward_categories: 出現した賞品タイプ一覧（例：["coin","ticket"]）  
-  - rank_list: 順位ごとの報酬整理リスト（rank, reward_summary, reward_value_jpy）  
-  - reward_summary: 簡潔な説明文（例：「35000円 + チケット1枚」）  
+  - rank_list: 順位ごとの報酬整理リスト
+    - rank: 順位（例：1st, 2nd, 3rd, 4th-10th）
+    - reward_summary: 報酬要約（例：35000円 + チケット1枚）
+    - reward_value_jpy: 報酬の日本円換算値（Coin,割引券等を換算して合計、チケット/otherは0）
+  - reward_summary: 簡潔な説明文（例：「合計50000円 + チケット1枚」,「合計チケット12枚」）  
 
 ---
 
@@ -86,7 +90,8 @@ SYSTEM_PROMPT = """
     "rank_list": [
       {"rank":"1st","reward_summary":"35000円 + チケット1枚","reward_value_jpy":35000},
       {"rank":"2nd","reward_summary":"15000円","reward_value_jpy":15000}
-    ]
+    ],
+    "reward_summary": "合計50000円 + チケット1枚"
   }
 }
 """
@@ -106,21 +111,22 @@ Markdown 内容：
 def extract_json(markdown_text):
     prompt = USER_PROMPT_TEMPLATE.format(markdown_content=markdown_text)
     response = client.responses.parse(
-        model="gpt-4o-mini",  # 或 gpt-4o-mini ,gpt-5-nano
+        model="gpt-4.1-nano",  # 或 gpt-4o-mini , gpt-5-nano, gpt-4.1-nano
         instructions=SYSTEM_PROMPT,
         input=prompt
     )
+    logging.info(f"AI Response: {response.error}")
     return response.output_text
 
 
 
 if __name__ == "__main__":
     # 遍历 Markdown 文件夹
-    markdown_files = glob("backend/scripts/py-script/md_files/tourney/*.md")
+    markdown_files = glob("data/tournament/md/*")
     print('markdown_files: ' + str(len(markdown_files)))
     i = 0
     for md_file in markdown_files:
-      if i > 3:
+      if i >= 3:
           break
       i += 1
       with open(md_file, 'r', encoding='utf-8') as f:
@@ -129,7 +135,7 @@ if __name__ == "__main__":
       json_output = extract_json(md_text)
 
       # 保存 JSON 结果
-      out_path = md_file.replace("md_files", "json").replace(".md", ".json")
+      out_path = md_file.replace("md", "json_test")
       os.makedirs(os.path.dirname(out_path), exist_ok=True)
       with open(out_path, 'w', encoding='utf-8') as f_out:
           f_out.write(json_output)

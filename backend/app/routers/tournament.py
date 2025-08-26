@@ -1,6 +1,6 @@
 import json
 from flask import Blueprint, Response, request
-from models.tournament import Tournament
+from models.tournament_model import Tournament
 
 tournament_bp = Blueprint('tournament', __name__)
 
