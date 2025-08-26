@@ -1,10 +1,12 @@
 from flask import Flask
+from flask_cors import CORS
 from config import SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS, SECRET_KEY
 from db import db, init_db
 from routers.tournament import tournament_bp
 
 def create_app():
     app = Flask(__name__)
+    CORS(app)
     app.config.from_object('config')
     init_db(app)
     app.register_blueprint(tournament_bp, url_prefix='/api/tournament')

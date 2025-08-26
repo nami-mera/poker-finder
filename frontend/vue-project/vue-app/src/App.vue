@@ -35,16 +35,16 @@
         <div class="card-list">
           <div
             v-for="event in results"
-            :key="event.id"
+            :key="event.event_id"
             class="event-card"
           >
             <div class="event-main">
-              <span class="card-title">{{ event.name }}</span>
-              <span class="card-bonus">賞金：¥{{ event.bonus }}</span>
+              <span class="card-title">{{ event.event_name }}</span>
+              <span class="card-bonus">賞金：¥{{ event.prizes }}</span>
             </div>
             <div class="event-detail">
-              <span>開催地：{{ event.location || '不明' }}</span>
-              <span>日付：{{ event.date || '未公表' }}</span>
+              <span>店铺名：{{ event.shop_name || '不明' }}</span>
+              <span>链接：{{ event.event_link || '未公表' }}</span>
             </div>
           </div>
         </div>
@@ -69,14 +69,14 @@ const loading = ref(false)
 async function onSearch() {
   loading.value = true
   try {
-    // 'location'は検索項目から除外
-    const res = await axios.get('/api/search', {
+    const res = await axios.get('http://localhost:5000/api/tournament/', {
       params: {
-        name: searchName.value,
+        event_name: searchName.value,
         bonus_min: bonusMin.value,
         bonus_max: bonusMax.value,
       },
     })
+    console.log(res.data)
     results.value = res.data?.data || []
   } catch (e) {
     results.value = []
