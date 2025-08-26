@@ -12,7 +12,7 @@ class Tournament(db.Model):
     shop_id = db.Column(db.Integer, nullable=False)
     shop_name = db.Column(db.String(100), default='')
     official_page = db.Column(db.String(200), default='')
-    start_time = db.Column(db.DateTime, nullable=False)
+    start_time = db.Column(db.String(100), default='')
     game_rule = db.Column(db.String(100), default='')
     entry_fee = db.Column(db.Integer, nullable=False, default=0)
     re_entry = db.Column(db.String(100), default='')
@@ -25,8 +25,8 @@ class Tournament(db.Model):
     reward_categories = db.Column(db.String(200), default='')
     rank_list = db.Column(db.Text, default='')
 
-    created_at = db.Column(db.DateTime, server_default=db.func.now(), nullable=False)
-    updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now(), nullable=False)
+    # created_at = db.Column(db.DateTime, server_default=db.func.now(), nullable=False)
+    # updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now(), nullable=False)
 
     def __repr__(self):
         return self.to_json()
@@ -41,7 +41,7 @@ class Tournament(db.Model):
             "shop_id": self.shop_id,
             "shop_name": self.shop_name,
             "official_page": self.official_page,
-            "start_time": self.start_time.isoformat() if self.start_time else None,
+            "start_time": self.start_time,
             "game_rule": self.game_rule,
             "entry_fee": self.entry_fee,
             "re_entry": self.re_entry,
@@ -53,8 +53,8 @@ class Tournament(db.Model):
             "total_value_jpy": self.total_value_jpy,
             "reward_categories": self.reward_categories,
             "rank_list": self.rank_list,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            # "created_at": self.created_at.isoformat() if self.created_at else None,
+            # "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
     def to_json(self):

@@ -1,245 +1,278 @@
 <template>
-  <div class="poker-container">
-    <h1 class="title">ポーカートーナメント検索</h1>
+  <div class="container">
+    <h1 class="title">POKER-FINDER</h1>
+
     <div class="search-bar">
+      <select v-model="search.reward_categories" class="input-field">
+        <option value="">全部奖金类型</option>
+        <option v-for="category in rewardCategories" :key="category" :value="category">{{ category }}</option>
+      </select>
+
       <input
-        v-model="searchName"
-        class="input"
-        type="text"
-        placeholder="トーナメント名"
-      />
-      <input
-        v-model.number="bonusMin"
-        class="input"
+        v-model.number="search.minTotal"
         type="number"
-        placeholder="最低賞金"
+        placeholder="最小总奖金 (JPY)"
+        class="input-field"
         min="0"
       />
       <input
-        v-model.number="bonusMax"
-        class="input"
+        v-model.number="search.maxTotal"
         type="number"
-        placeholder="最高賞金"
+        placeholder="最大总奖金 (JPY)"
+        class="input-field"
         min="0"
       />
-      <button @click="onSearch" class="search-btn">
-        <span class="icon-search">🔎</span> 検索
-      </button>
+
+      <button @click="onSearch" class="search-button">查询</button>
     </div>
 
-    <div class="result-area">
-      <template v-if="loading">
-        <div class="loading">トーナメントデータを検索中...</div>
-      </template>
-      <template v-else-if="results.length">
-        <div class="card-list">
-          <div
-            v-for="event in results"
-            :key="event.event_id"
-            class="event-card"
-          >
-            <div class="event-main">
-              <span class="card-title">{{ event.event_name }}</span>
-              <span class="card-bonus">賞金：¥{{ event.prizes }}</span>
-            </div>
-            <div class="event-detail">
-              <span>店铺名：{{ event.shop_name || '不明' }}</span>
-              <span>链接：{{ event.event_link || '未公表' }}</span>
-            </div>
-          </div>
-        </div>
-      </template>
-      <template v-else>
-        <div class="no-data">トーナメント情報がありません</div>
-      </template>
+    <div class="result-list" v-if="results.length > 0">
+      <table>
+        <thead>
+          <tr>
+            <th>奖金类型</th>
+            <th>总奖金 (JPY)</th>
+            <th>事件名称</th>
+            <th>开始时间</th>
+            <th>状态</th>
+            <th>活动链接</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in results" :key="item.event_id">
+            <td>{{ item.reward_categories }}</td>
+            <td>{{ item.total_value_jpy.toLocaleString() }}</td>
+            <td>{{ item.event_name }}</td>
+            <td>{{ formatDate(item.start_time) }}</td>
+            <td>
+              <span :class="['status', statusClass(item.status)]">{{ item.status }}</span>
+            </td>
+            <td>
+              <a :href="item.event_link" target="_blank" rel="noopener" class="event-link">查看详情</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div v-else class="no-results">
+      暂无查询结果
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import axios from 'axios'
+import { reactive, ref } from 'vue'
 
-const searchName = ref('')
-const bonusMin = ref('')
-const bonusMax = ref('')
+const rewardCategories = ref([
+  '现金', '代金券', '实物礼品', '积分', 'ticket', 'coin', '其他'
+])
+
+const search = reactive({
+  reward_categories: '',
+  minTotal: null,
+  maxTotal: null
+})
+
 const results = ref([])
-const loading = ref(false)
+
+// 构建查询参数字符串
+function buildQueryParams() {
+  const params = new URLSearchParams()
+
+  if (search.reward_categories) {
+    params.append('reward_categories', search.reward_categories)
+  }
+  if (search.minTotal != null && !isNaN(search.minTotal)) {
+    params.append('min_total_value_jpy', search.minTotal)
+  }
+  if (search.maxTotal != null && !isNaN(search.maxTotal)) {
+    params.append('max_total_value_jpy', search.maxTotal)
+  }
+  return params.toString()
+}
 
 async function onSearch() {
-  loading.value = true
   try {
-    const res = await axios.get('http://localhost:5000/api/tournament/', {
-      params: {
-        event_name: searchName.value,
-        bonus_min: bonusMin.value,
-        bonus_max: bonusMax.value,
-      },
-    })
-    console.log(res.data)
-    results.value = res.data?.data || []
-  } catch (e) {
+    const query = buildQueryParams()
+    const url = `/api/tournament/?${query}`
+
+    const res = await fetch(url)
+    if (!res.ok) {
+      console.error('请求失败', res.status)
+      results.value = []
+      return
+    }
+    const json = await res.json()
+    results.value = json.data  // 取 data 数组
+  } catch (error) {
+    console.error('请求异常', error)
     results.value = []
-    alert('検索失敗: ' + (e.response?.data?.message || e.message))
-  } finally {
-    loading.value = false
+  }
+}
+
+function formatDate(datetimeStr) {
+  if (!datetimeStr) return '-'
+  const date = new Date(datetimeStr)
+  return date.toLocaleString()
+}
+
+function statusClass(status) {
+  switch (status) {
+    case '待機中':
+      return 'status-pending'
+    case '进行中':
+      return 'status-active'
+    case '已结束':
+      return 'status-ended'
+    default:
+      return ''
   }
 }
 </script>
 
 <style scoped>
-.poker-container {
-  max-width: 780px;
-  margin: 42px auto 0 auto;
-  background: #f7fdfb;
-  box-shadow: 0 6px 32px 0 #e0f7ea6b;
-  border-radius: 18px;
-  padding: 40px 36px 36px 36px;
-  box-sizing: border-box;
+.container {
+  max-width: 960px;
+  margin: 3rem auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #fff;
+  padding: 2rem 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
 }
+
 .title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 1.8rem;
   text-align: center;
-  color: #197144;
-  letter-spacing: 2px;
-  font-size: 2.4em;
-  font-family: 'Montserrat', 'PingFang SC', Arial, sans-serif;
-  font-weight: bold;
-  margin-bottom: 30px;
+  user-select: none;
 }
+
 .search-bar {
   display: flex;
-  gap: 18px;
-  justify-content: center;
   align-items: center;
-  margin-bottom: 40px;
+  gap: 1rem;
+  margin-bottom: 2rem;
   flex-wrap: wrap;
-  background: #fff;
-  box-shadow: 0 2px 10px 0 #ceede3a8;
-  border-radius: 10px;
-  padding: 18px 22px 10px;
 }
 
-.input {
+.input-field {
+  padding: 0.5rem 0.75rem;
+  font-size: 1.05rem;
+  border: 1.8px solid #ced4da;
+  border-radius: 8px;
+  flex: 1 1 180px;
   min-width: 140px;
-  max-width: 200px;
-  flex: 0 1 180px;
-  background: #f4fbf6;
-  border-radius: 6px;
-  border: 1.5px solid #ace8cf;
+  transition: border-color 0.25s;
+}
+
+.input-field:focus {
   outline: none;
-  padding: 11px 12px;
-  font-size: 1.13em;
-  margin-bottom: 8px;
-  transition: border-color 0.2s;
+  border-color: #409eff;
+  box-shadow: 0 0 5px #66b1ffaa;
 }
-.input:focus {
-  border-color: #40b6a8;
-  background: #e3faef;
-}
-.search-btn {
-  background: linear-gradient(90deg, #197144 70%, #49dfaf 100%);
+
+.search-button {
+  background: linear-gradient(135deg, #40a9ff 0%, #096dd9 100%);
   color: #fff;
-  font-weight: 600;
-  font-size: 1.17em;
   border: none;
-  border-radius: 7px;
-  padding: 12px 38px;
-  box-shadow: 0 2px 10px #58dfa651;
-  cursor: pointer;
-  margin-bottom: 8px;
-  letter-spacing: 1px;
-  transition: opacity 0.2s, box-shadow 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.search-btn:hover {
-  opacity: 0.9;
-  box-shadow: 0 4px 18px #15704844;
-}
-.icon-search {
-  font-size: 1.34em;
-}
-
-.result-area {
-  min-height: 200px;
-}
-.loading {
-  text-align: center;
-  color: #15a86c;
-  font-size: 1.23em;
-}
-.no-data {
-  text-align: center;
-  color: #aaa;
-  font-size: 1.12em;
-  margin-top: 36px;
-}
-
-.card-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  justify-content: flex-start;
-  margin-top: 20px;
-}
-.event-card {
-  background: #fff;
-  border-radius: 11px;
-  box-shadow: 0 3px 8px #ace8cf45;
-  border-left: 6px solid #197144;
-  overflow: hidden;
-  min-width: 235px;
-  max-width: 315px;
-  flex: 1 0 260px;
-  padding: 22px 20px 16px 20px;
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 8px;
-  transition: transform 0.15s;
-}
-.event-card:hover {
-  transform: translateY(-4px) scale(1.03);
-  box-shadow: 0 10px 28px #58dfa631;
-}
-.card-title {
-  color: #197144;
+  padding: 0.6rem 1.8rem;
   font-weight: 700;
-  font-size: 1.16em;
-  letter-spacing: 1.5px;
-}
-.card-bonus {
-  color: #28bb70;
-  font-size: 1.12em;
-  font-family: Monaco, monospace;
-  font-weight: 600;
-  margin-left: 8px;
-}
-.event-detail {
-  color: #287061;
-  font-size: 0.98em;
-  margin-top: 9px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  border-radius: 10px;
+  min-width: 110px;
+  user-select: none;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
+  transition: background 0.3s ease;
 }
 
-@media (max-width: 850px) {
-  .poker-container {
-    padding: 22px 6px 28px 6px;
-  }
-  .search-bar {
-    padding: 10px 3vw;
-    gap: 10px;
-  }
-  .card-list {
-    justify-content: center;
-  }
+.search-button:hover {
+  background: linear-gradient(135deg, #69c0ff, #0050b3);
 }
-@media (max-width: 650px) {
-  .search-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
+
+.result-list table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.8rem;
+  font-size: 1rem;
+  user-select: text;
+}
+
+.result-list thead tr {
+  background-color: #fafafa;
+  box-shadow: inset 0 -3px 8px #e2e6eb;
+  user-select: none;
+}
+
+.result-list th,
+.result-list td {
+  padding: 0.75rem 1.2rem;
+  text-align: left;
+  vertical-align: middle;
+  color: #2c3e50;
+}
+
+.result-list th {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.result-list tbody tr {
+  background-color: #fefefe;
+  border-radius: 8px;
+  transition: transform 0.18s ease;
+}
+
+.result-list tbody tr:hover {
+  background-color: #e6f7ff;
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgb(24 144 255 / 0.15);
+}
+
+.status {
+  padding: 0.25rem 0.8rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: white;
+  display: inline-block;
+  user-select: none;
+}
+
+.status-pending {
+  background-color: #faad14;
+}
+
+.status-active {
+  background-color: #52c41a;
+}
+
+.status-ended {
+  background-color: #f5222d;
+}
+
+.event-link {
+  color: #1890ff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.event-link:hover {
+  text-decoration: underline;
+  color: #0050b3;
+}
+
+.no-results {
+  color: #888;
+  font-size: 1.2rem;
+  font-style: italic;
+  text-align: center;
+  margin-top: 4rem;
+  user-select: none;
 }
 </style>
