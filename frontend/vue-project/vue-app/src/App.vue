@@ -95,9 +95,11 @@ function buildQueryParams() {
 async function onSearch() {
   try {
     const query = buildQueryParams()
-    const url = `/api/tournament/?${query}`
+    // const url = `/api/tournament/?${query}`
 
-    const res = await fetch(url)
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/tournament/?${query}`);
+
+    // const res = await fetch(url)
     if (!res.ok) {
       console.error('请求失败', res.status)
       results.value = []
