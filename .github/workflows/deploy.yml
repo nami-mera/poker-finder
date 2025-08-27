@@ -20,7 +20,7 @@ jobs:
         run: cd frontend-new && npm install
 
       - name: Build
-        run: cd frontend-new && npm run build
+        run: cd frontend-new && export NODE_OPTIONS=--openssl-legacy-provider && npm run build
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
