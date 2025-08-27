@@ -3,27 +3,27 @@ name: Deploy Vite Site to GitHub Pages
 on:
   push:
     branches:
-      - main    # 或你的默认分支名
-
+      - master    # or your default branch
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
       - name: Install dependencies
-        run: npm install
+        run: cd frontend-new && npm install
 
       - name: Build
-        run: npm run build
+        run: cd frontend-new && npm run build
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          publish_dir: ./frontend-new/dist
