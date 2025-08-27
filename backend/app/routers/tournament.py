@@ -5,20 +5,8 @@ from sqlalchemy import and_
 
 tournament_bp = Blueprint('tournament', __name__)
 
-# @tournament_bp.route('/', methods=['GET'])
-# def list_tournament():
-#     data = Tournament.query.all()
-#     data = [t.to_dict() for t in data]
-#     resp = {
-#         "data": data
-#     }
-#     return Response(
-#         json.dumps(resp, ensure_ascii=False),
-#         content_type='application/json; charset=utf-8'
-#     )
 
-
-@tournament_bp.route('/', methods=['GET'])
+@tournament_bp.route('/query', methods=['GET'])
 def get_tournaments():
     event_name = request.args.get("reward_categories", type=str)
     min_total = request.args.get("min_total_value_jpy", type=int)
@@ -46,6 +34,22 @@ def get_tournaments():
         "data": data
     }
     return Response(
-        json.dumps(resp, ensure_ascii=False),
+        json.dumps(resp, ensure_ascii=False, default=str),
+        content_type='application/json; charset=utf-8'
+    )
+
+
+@tournament_bp.route('/config', methods=['GET'])
+def config():
+    all_city_ward = Tournament.get_all_city_ward()
+    all_prefecture = Tournament.get_all_prefecture()   
+    resp = {
+        "data": {
+            "all_city_ward": all_city_ward,
+            "all_prefecture": all_prefecture
+        }
+    }
+    return Response(
+        json.dumps(resp, ensure_ascii=False, default=str),
         content_type='application/json; charset=utf-8'
     )

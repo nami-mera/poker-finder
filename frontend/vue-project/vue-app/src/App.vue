@@ -94,10 +94,13 @@ function buildQueryParams() {
 
 async function onSearch() {
   try {
-    const query = buildQueryParams()
-    const API_BASE_URL = import.meta.env.VITE_API_URL;
-    console.log(API_BASE_URL);
-    const res = await fetch(`${API_BASE_URL}/api/tournament/?${query}`);
+    // const query = buildQueryParams()
+    // console.log('当前 API 地址为:', import.meta.env.VITE_API_URL);
+    // const API_BASE_URL = import.meta.env.VITE_API_URL;
+    // const res = await fetch(`${API_BASE_URL}/api/tournament/?${query}`);
+
+    const url = `/api/tournament/?${query}`
+    const res = await fetch(url)
     if (!res.ok) {
       console.error('请求失败', res.status)
       results.value = []

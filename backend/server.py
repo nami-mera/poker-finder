@@ -13,15 +13,6 @@ def create_app():
     app.config.from_object('config')
     init_db(app)
     app.register_blueprint(tournament_bp, url_prefix='/api/tournament')
-
-    @app.route("/dbtest")
-    def dbtest():
-        try:
-            result = db.session.execute('SELECT 1')
-            return "✅ 数据库连接成功！"
-        except Exception as e:
-            return f"❌ 数据库连接失败: {e}"
-        
     return app
     
 if __name__ == '__main__':

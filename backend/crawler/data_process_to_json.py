@@ -20,9 +20,9 @@ SYSTEM_PROMPT = """
 - 欠損フィールドは null。  
 - 日付・時間 → "YYYY-MM-DD HH:MM"（24時間制）  
 - 金額 → 整数のみ、単位なし  
-- Coin 換算 → 1 Coin = 1円  
-- チケット類は金額不明 → reward_value_jpy = null  
+- Coin 換算 → 1 Coin = 1円   
 - 分析でチケット類は「0円」として集計すること  
+- チケットであれば、チケットのタイプなのかを分析する必要があります
 - すべてのフィールドの文字列長は1000文字未満です。
 
 ---
@@ -88,10 +88,10 @@ SYSTEM_PROMPT = """
     "total_value_jpy": 50000,
     "reward_categories": ["coin","ticket"],
     "rank_list": [
-      {"rank":"1st","reward_summary":"35000円 + チケット1枚","reward_value_jpy":35000},
+      {"rank":"1st","reward_summary":"35000円 + joptチケット1枚","reward_value_jpy":35000},
       {"rank":"2nd","reward_summary":"15000円","reward_value_jpy":15000}
     ],
-    "reward_summary": "合計50000円 + チケット1枚"
+    "reward_summary": "合計50000円 + joptチケット1枚"
   }
 }
 """

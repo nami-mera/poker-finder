@@ -3,9 +3,8 @@
   "homepage": "https://nami-mera.github.io/poker-finder",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "build": "vite build --mode production",
+    "deploy": "npm run build && gh-pages -d dist"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.1",

@@ -1,5 +1,6 @@
 from db import db
 import json
+from sqlalchemy import text
 
 class Tournament(db.Model):
     __tablename__ = 'tournaments'
@@ -19,14 +20,16 @@ class Tournament(db.Model):
     prizes = db.Column(db.Text, nullable=False)
     prizes_original = db.Column(db.Text, default='')
     address = db.Column(db.String(200), default='')
+    prefecture = db.Column(db.String(200), default='')
+    city_ward = db.Column(db.String(200), default='')
     tel = db.Column(db.String(50), default='')
     total_winners = db.Column(db.Integer, nullable=False, default=0)
     total_value_jpy = db.Column(db.Integer, nullable=False, default=0)
     reward_categories = db.Column(db.String(200), default='')
     rank_list = db.Column(db.Text, default='')
-
-    # created_at = db.Column(db.DateTime, server_default=db.func.now(), nullable=False)
-    # updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now(), nullable=False)
+    reward_summary = db.Column(db.Text, default='')
+    created_at = db.Column(db.DateTime, server_default=db.func.now(), nullable=False)
+    updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now(), nullable=False)
 
     def __repr__(self):
         return self.to_json()
@@ -48,14 +51,27 @@ class Tournament(db.Model):
             "prizes": self.prizes,
             "prizes_original": self.prizes_original,
             "address": self.address,
+            "prefecture": self.prefecture,
+            "city_ward": self.city_ward,
             "tel": self.tel,
             "total_winners": self.total_winners,
             "total_value_jpy": self.total_value_jpy,
             "reward_categories": self.reward_categories,
             "rank_list": self.rank_list,
-            # "created_at": self.created_at.isoformat() if self.created_at else None,
-            # "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "reward_summary": self.reward_summary,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
     def to_json(self):
         return json.dumps(self.to_dict(), ensure_ascii=False)
+    
+    def get_all_city_ward():
+        sql = "SELECT DISTINCT city_ward FROM tournaments WHERE city_ward != '' ORDER BY city_ward"
+        result = db.session.execute(text(sql))
+        return [row[0] for row in result.fetchall()]
+    
+    def get_all_prefecture():
+        sql = "SELECT DISTINCT prefecture FROM tournaments WHERE prefecture != '' ORDER BY prefecture"
+        result = db.session.execute(text(sql))
+        return [row[0] for row in result.fetchall()]

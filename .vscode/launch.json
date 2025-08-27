@@ -14,7 +14,7 @@
             "request": "launch",
             "module": "flask",
             "env": {
-                "FLASK_APP": "app:create_app",
+                "FLASK_APP": "server:create_app",
                 "FLASK_DEBUG": "1",
                 "PYTHONPATH": "${workspaceFolder}"
             },
@@ -22,7 +22,7 @@
             "args": [
                 "run",
                 "--no-debugger",
-                "--no-reload"
+                // "--no-reload"
             ],
             "jinja": true,
             "autoStartBrowser": false
