@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # 进入项目目录
-cd ~/poker-finder/backend
-
+cd ../
 # 启动虚拟环境
 source venv/bin/activate
+cd backend
 
 # 设置 Flask 运行入口和关闭调试
 export FLASK_APP=server.py
