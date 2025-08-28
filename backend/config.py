@@ -1,3 +1,5 @@
-SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root:root@localhost:3306/test"
+
+import os
+SQLALCHEMY_DATABASE_URI = os.environ.get("MYSQL_URI")
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 SECRET_KEY = 'yoursecret'

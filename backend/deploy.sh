@@ -1,6 +1,6 @@
 #!/bin/bash
 # 启动虚拟环境
-../venv/bin/activate
+source ../venv/bin/activate
 
 # 设置 Flask 运行入口和关闭调试
 export FLASK_APP=server.py
@@ -12,7 +12,7 @@ SESSION="flask-server"
 # 如果 tmux session 不存在就创建并启动 Flask
 if ! tmux has-session -t $SESSION 2>/dev/null; then
     echo "Starting Flask in tmux session '$SESSION'..."
-    tmux new-session -d -s $SESSION "flask run --host=0.0.0.0 --port=5000"
+    tmux new-session -d -s $SESSION "flask run --host=0.0.0.0 --port=5000 > flask.log 2>&1"
 else
     echo "Flask already running in tmux session '$SESSION'"
 fi
