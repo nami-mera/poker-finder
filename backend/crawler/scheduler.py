@@ -136,7 +136,7 @@ async def main():
         for link in tourney_links:
             if link.split("/")[-1] not in saved_tourney_ids:
                 new_tourney_links.append(link)
-    tourney_details = await crawl_tournament_details(new_tourney_links)
+    tourney_details = await crawl_tournament_details(new_tourney_links[:5])
     process_tournament_details_to_json(tourney_details)
     with app.app_context():
         save_tournament_to_db()
