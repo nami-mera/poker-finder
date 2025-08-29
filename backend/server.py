@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
-from config import SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS
-from db import db, init_db
+from backend.config import SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS
+from backend.db import db, init_db
 from app.routers.tournament import tournament_bp
 from logging_config import init_logging
 

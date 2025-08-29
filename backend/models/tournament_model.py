@@ -1,4 +1,4 @@
-from db import db
+from backend.db import db
 import json
 from sqlalchemy import text
 
@@ -9,25 +9,19 @@ class Tournament(db.Model):
     event_id = db.Column(db.Integer, nullable=False, unique=True)
     event_name = db.Column(db.String(200), nullable=False)
     event_link = db.Column(db.String(500), default='')
-    status = db.Column(db.String(50), nullable=False, default='upcoming')
+    start_date = db.Column(db.DateTime, nullable=False)
+    start_time = db.Column(db.String(20), default='')
+    late_time = db.Column(db.String(20), default='')
+    entry_fee = db.Column(db.Integer, nullable=False, default=0)
+    prizes_original = db.Column(db.Text)
+    reward_categories = db.Column(db.String(200), default='')
+    reward_summary = db.Column(db.Text)
     shop_id = db.Column(db.Integer, nullable=False)
     shop_name = db.Column(db.String(100), default='')
+    shop_link = db.Column(db.String(200), default='')
     official_page = db.Column(db.String(200), default='')
-    start_time = db.Column(db.String(100), default='')
-    game_rule = db.Column(db.String(100), default='')
-    entry_fee = db.Column(db.Integer, nullable=False, default=0)
-    re_entry = db.Column(db.String(100), default='')
-    prizes = db.Column(db.Text, nullable=False)
-    prizes_original = db.Column(db.Text, default='')
-    address = db.Column(db.String(200), default='')
     prefecture = db.Column(db.String(200), default='')
     city_ward = db.Column(db.String(200), default='')
-    tel = db.Column(db.String(50), default='')
-    total_winners = db.Column(db.Integer, nullable=False, default=0)
-    total_value_jpy = db.Column(db.Integer, nullable=False, default=0)
-    reward_categories = db.Column(db.String(200), default='')
-    rank_list = db.Column(db.Text, default='')
-    reward_summary = db.Column(db.Text, default='')
     created_at = db.Column(db.DateTime, server_default=db.func.now(), nullable=False)
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now(), nullable=False)
 
@@ -40,38 +34,33 @@ class Tournament(db.Model):
             "event_id": self.event_id,
             "event_name": self.event_name,
             "event_link": self.event_link,
-            "status": self.status,
+            "start_date": self.start_time.isoformat() if self.start_date else None,
+            "start_time": self.start_time,
+            "late_time": self.late_time,
+            "entry_fee": self.entry_fee,
+            "prizes_original": self.prizes_original,
+            "reward_categories": self.reward_categories,
+            "reward_summary": self.reward_summary,
             "shop_id": self.shop_id,
             "shop_name": self.shop_name,
+            "shop_link": self.shop_link,
             "official_page": self.official_page,
-            "start_time": self.start_time,
-            "game_rule": self.game_rule,
-            "entry_fee": self.entry_fee,
-            "re_entry": self.re_entry,
-            "prizes": self.prizes,
-            "prizes_original": self.prizes_original,
-            "address": self.address,
             "prefecture": self.prefecture,
             "city_ward": self.city_ward,
-            "tel": self.tel,
-            "total_winners": self.total_winners,
-            "total_value_jpy": self.total_value_jpy,
-            "reward_categories": self.reward_categories,
-            "rank_list": self.rank_list,
-            "reward_summary": self.reward_summary,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
     def to_json(self):
         return json.dumps(self.to_dict(), ensure_ascii=False)
-    
-    def get_all_city_ward():
-        sql = "SELECT DISTINCT city_ward FROM tournaments WHERE city_ward != '' ORDER BY city_ward"
-        result = db.session.execute(text(sql))
-        return [row[0] for row in result.fetchall()]
-    
+
     def get_all_prefecture():
         sql = "SELECT DISTINCT prefecture FROM tournaments WHERE prefecture != '' ORDER BY prefecture"
         result = db.session.execute(text(sql))
         return [row[0] for row in result.fetchall()]
+
+    def get_all_shop_name():
+        sql = "SELECT DISTINCT shop_name FROM tournaments WHERE shop_name != '' ORDER BY shop_name"
+        result = db.session.execute(text(sql))
+        return [row[0] for row in result.fetchall()]
+

@@ -1,37 +1,59 @@
 import json
 from flask import Blueprint, Response, request
-from models.tournament_model import Tournament
-from sqlalchemy import and_
+from backend.models.tournament_model import Tournament
+from sqlalchemy import and_, or_
 
 tournament_bp = Blueprint('tournament', __name__)
 
 
 @tournament_bp.route('/query', methods=['GET'])
 def get_tournaments():
-    event_name = request.args.get("reward_categories", type=str)
-    min_total = request.args.get("min_total_value_jpy", type=int)
-    max_total = request.args.get("max_total_value_jpy", type=int)
+    # 模糊匹配，event_name，reward_summary，shop_name，address，prizes_original，reward_categories
+    key_word = request.args.get("key_word", type=str)
+    # 字符串模糊匹配，reward_categories
+    reward_categories = request.args.get("reward_categories", type=str)
+    # 数字范围，entry_fee
+    min_entry_fee = request.args.get("min_entry_fee", type=int)
+    max_entry_fee = request.args.get("max_entry_fee", type=int)
+    # 完全匹配，city_ward，shop_name，prefecture
+    city_ward = request.args.get("city_ward", type=str)
+    shop_name = request.args.get("shop_name", type=str)
+    prefecture = request.args.get("prefecture", type=str)
     
     query = Tournament.query
-
     filters = []
     
-    if event_name:
-        # 模糊匹配
-        filters.append(Tournament.event_name.ilike(f"%{event_name}%"))
-    if min_total is not None:
-        filters.append(Tournament.total_value_jpy >= min_total)
-    if max_total is not None:
-        filters.append(Tournament.total_value_jpy <= max_total)
+    if key_word:
+        key_word_filter = or_(
+            Tournament.event_name.ilike(f"%{key_word}%"),
+            Tournament.reward_summary.ilike(f"%{key_word}%"),
+            Tournament.shop_name.ilike(f"%{key_word}%"),
+            Tournament.address.ilike(f"%{key_word}%"),
+            Tournament.prizes_original.ilike(f"%{key_word}%"),
+            Tournament.reward_categories.ilike(f"%{key_word}%"),
+        )
+        filters.append(key_word_filter)
+    if reward_categories:
+        filters.append(Tournament.reward_categories.ilike(f"%{reward_categories}%"))
+    if min_entry_fee is not None:
+        filters.append(Tournament.entry_fee >= min_entry_fee)
+    if max_entry_fee is not None:
+        filters.append(Tournament.entry_fee <= max_entry_fee)
+    if city_ward:
+        filters.append(Tournament.city_ward == city_ward)
+    if shop_name:
+        filters.append(Tournament.shop_name == shop_name)
+    if prefecture:
+        filters.append(Tournament.prefecture == prefecture)
 
     if filters:
         query = query.filter(and_(*filters))
 
     results = query.all()
-
     data = [t.to_dict() for t in results]
     resp = {
-        "data": data
+        "data": data,
+        "total": len(data)
     }
     return Response(
         json.dumps(resp, ensure_ascii=False, default=str),
@@ -41,12 +63,12 @@ def get_tournaments():
 
 @tournament_bp.route('/config', methods=['GET'])
 def config():
-    all_city_ward = Tournament.get_all_city_ward()
-    all_prefecture = Tournament.get_all_prefecture()   
+    all_prefecture = Tournament.get_all_prefecture()
+    all_shop_name = Tournament.get_all_shop_name()   
     resp = {
         "data": {
-            "all_city_ward": all_city_ward,
-            "all_prefecture": all_prefecture
+            "all_prefecture": all_prefecture,
+            "all_shop_name": all_shop_name
         }
     }
     return Response(

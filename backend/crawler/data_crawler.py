@@ -57,8 +57,45 @@ schema_of_shop_xpath = {
         }
     ]
 }
-
-
+schema_of_tournament_xpath = {
+    "name": "tournament_info",
+    # 只选第一个panel（主赛事信息）
+    "baseSelector": "//div[contains(@class, 'col-md-8')]/main/div[contains(@class, 'panel') and contains(@class, 'panel-pg-default')][1]",
+    "fields": [
+        {
+            "name": "event_name",
+            "selector": ".//div[contains(@class, 'panel-heading')]",
+            "type": "text"
+        },
+        {
+            "name": "shop_name",
+            "selector": ".//th[contains(text(),'店舗名')]/following-sibling::td[1]/a",
+            "type": "text"
+        },
+        {
+            "name": "shop_link",
+            "selector": ".//th[contains(text(),'店舗名')]/following-sibling::td[1]/a",
+            "type": "attribute",
+            "attribute": "href"
+        },
+        {
+            "name": "official_page",
+            "selector": ".//th[contains(text(),'公式ページ')]/following-sibling::td[1]/a",
+            "type": "attribute",
+            "attribute": "href"
+        },
+        {
+            "name": "start_time",
+            "selector": ".//th[contains(text(),'開始日時')]/following-sibling::td[1]",
+            "type": "text"
+        },
+        {
+            "name": "entry_fee",
+            "selector": ".//th[contains(text(),'参加費')]/following-sibling::td[1]",
+            "type": "text"
+        }
+    ]
+}
 
 
 async def crawl_links(url):
@@ -123,7 +160,6 @@ async def crawl_by_css():
             {"name": "shop_addr", "selector": "td.col-xs-3", "type": "text"},
         ]
     }
-
     async with AsyncWebCrawler() as crawler:
         result = await crawler.arun(
             url=search_url,
@@ -159,8 +195,6 @@ async def crawl_by_xpath():
         )
         data = json.loads(result.extracted_content)
         print(data)
-    
-
 
 
 async def crawl_by_table():
@@ -209,7 +243,8 @@ async def crawl_shop_details(shop_links):
 async def crawl_tournament_details(tournament_links):
     config = CrawlerRunConfig(
         cache_mode=CacheMode.BYPASS,
-        css_selector="div.col-md-8"
+        css_selector="div.col-md-8",
+        extraction_strategy=JsonXPathExtractionStrategy(schema_of_tournament_xpath)
     )
     tourney_details = await crawl_parallel_dispatcher(tournament_links, config)
     print('tourney_details: ' + str(len(tourney_details)))
@@ -226,20 +261,28 @@ if __name__ == "__main__":
     # asyncio.run(crawl_by_table())
 
     # 爬取tourney和shop的链接
-    tourney_links, shop_links = crawl_links(search_url)
+    tourney_links, shop_links = asyncio.run(crawl_links(search_url))
     print('tourney_links: ' + str(len(tourney_links)))
 
     # 爬取tourney的详情,markdown格式
     config = CrawlerRunConfig(
         cache_mode=CacheMode.BYPASS,
-        css_selector="div.col-md-8"
+        css_selector="div.col-md-8",
+        # target_elements=["article.main-content", "aside.sidebar"],
+        extraction_strategy=JsonXPathExtractionStrategy(schema_of_tournament_xpath)
     )
-    tourney_details = asyncio.run(crawl_parallel_dispatcher(tourney_links[:3], config))
+    tourney_details = asyncio.run(crawl_parallel_dispatcher(tourney_links[:1], config))
     print('tourney_details: ' + str(len(tourney_details)))
     for detail in tourney_details:
         md_data = detail.markdown
+        json_data = json.loads(detail.extracted_content)
         file_name = detail.url.split('/')[-1]
-        save_to_file(md_data, f'backend/scripts/py-script/md_files/tourney/{file_name}.md')
+        data = {
+            'md_data': md_data,
+            'json_data': json_data
+        }
+        data = json.dumps(data, ensure_ascii=False, indent=2)
+        save_to_file(data, f'backend/crawler/data/tournament/json_test/{file_name}.test.json')
 
 
     # result = asyncio.run(crawl_link_detail('https://pokerguild.jp/tourneys/314098'))
