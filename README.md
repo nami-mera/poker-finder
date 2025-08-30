@@ -11,7 +11,7 @@ Poker Finder is a project for automated fetching and analysis of poker tournamen
 ## Installation
 
 1. Clone this repository:
-   git clone https://github.com/yourusername/poker-finder.git
+   git clone https://github.com/nami-mera/poker-finder.git
 
 2. Install dependencies:
    cd poker-finder
