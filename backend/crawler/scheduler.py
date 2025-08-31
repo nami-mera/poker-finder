@@ -72,6 +72,8 @@ def process_tournament_details_to_json(tournament_details):
         }
         # 结合ai，提取json格式内容
         ai_data = query_ai(saved_data)
+        if not ai_data:
+            continue
         saved_data['ai_data'] = ai_data
 
         saved_data = json.dumps(saved_data, ensure_ascii=False, indent=2)
