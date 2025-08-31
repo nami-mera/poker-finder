@@ -54,13 +54,34 @@ class Tournament(db.Model):
     def to_json(self):
         return json.dumps(self.to_dict(), ensure_ascii=False)
 
+    @staticmethod
     def get_all_prefecture():
         sql = "SELECT DISTINCT prefecture FROM tournaments WHERE prefecture != '' ORDER BY prefecture"
         result = db.session.execute(text(sql))
         return [row[0] for row in result.fetchall()]
 
+    @staticmethod
     def get_all_shop_name():
         sql = "SELECT DISTINCT shop_name FROM tournaments WHERE shop_name != '' ORDER BY shop_name"
         result = db.session.execute(text(sql))
         return [row[0] for row in result.fetchall()]
 
+    @staticmethod
+    def get_all_reward_categories():
+        sql = "SELECT DISTINCT reward_categories FROM tournaments WHERE reward_categories != ''"
+        result = db.session.execute(text(sql)).fetchall()
+        categories = set()
+        for row in result:
+            rc_text = row[0]
+            try:
+                # 有的可能是json数组字符串
+                cats = json.loads(rc_text)
+                if isinstance(cats, list):
+                    categories.update(cats)
+                else:
+                    # 万一有不是数组存储的，直接加进去
+                    categories.add(str(cats))
+            except Exception:
+                # 解析失败，按纯文本添加
+                categories.add(rc_text)
+        return sorted(categories)
