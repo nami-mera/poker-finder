@@ -106,7 +106,7 @@ async def crawl_links(url):
                 cache_mode=CacheMode.BYPASS,
             )
         )
-        links = result.links["internal"]
+        links = result.links["internal"] # pyright: ignore[reportAttributeAccessIssue]
         tourney_links = [link['href'] for link in links if '/tourneys/' in link['href']]
         shop_links = [link['href'] for link in links if '/venues/' in link['href']]
         return tourney_links, shop_links
@@ -128,7 +128,12 @@ async def crawl_link_detail(url):
 async def crawl_parallel_dispatcher(urls, config):
     # Dispatcher with rate limiter enabled (default behavior)
     dispatcher = MemoryAdaptiveDispatcher(
-        rate_limiter=RateLimiter(base_delay=(1.0, 3.0), max_delay=60.0, max_retries=3),
+        rate_limiter=RateLimiter(
+            base_delay=(1.0, 3.0),
+            max_delay=20.0,
+            max_retries=3,
+            rate_limit_codes=[429, 503]
+        ),
         max_session_permit=50,
     )
     start_time = time.perf_counter()

@@ -69,7 +69,11 @@ def query_ai(markdown_text):
         input=prompt
     )
     logging.info(f"AI Response: {response.error}")
-    return json.loads(response.output_text)
+    try:
+        return json.loads(response.output_text)
+    except json.JSONDecodeError as e:
+        logging.error(f"JSON Decode Error: {e}\nRaw Output: {response.output_text}")
+        return None  # 或者 raise e 看你希望如何处理
 
 
 

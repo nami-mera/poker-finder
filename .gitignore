@@ -1,5 +1,6 @@
 backend/crawler/data/
-
+.continue/
+.vscode/settings.json
 
 
 # Byte-compiled / optimized / DLL files

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import logging
 import re
+import time
 
 from backend.crawler.data_crawler import crawl_tournament_details, crawl_init_links
 from backend.crawler.ai_agent import query_ai
@@ -75,6 +76,7 @@ def process_tournament_details_to_json(tournament_details):
 
         saved_data = json.dumps(saved_data, ensure_ascii=False, indent=2)
         save_to_file(saved_data, DATA_PATH + f'/tournament/json/{file_name}')
+        time.sleep(0.2)
 
 
 def save_tournament_to_db():
@@ -136,7 +138,7 @@ async def main():
         for link in tourney_links:
             if link.split("/")[-1] not in saved_tourney_ids:
                 new_tourney_links.append(link)
-    tourney_details = await crawl_tournament_details(new_tourney_links[:5])
+    tourney_details = await crawl_tournament_details(new_tourney_links)
     process_tournament_details_to_json(tourney_details)
     with app.app_context():
         save_tournament_to_db()
