@@ -6,13 +6,8 @@ source ../venv/bin/activate
 export FLASK_APP=server.py
 export FLASK_ENV=production
 
-# 运行 Flask 应用在后台（使用 tmux）
-SESSION="flask-server"
+# 使用 nohup 启动 Flask 应用在后台
+echo "Starting Flask app with nohup..."
+nohup flask run --host=0.0.0.0 --port=5000 > flask.log 2>&1 &
 
-# 如果 tmux session 不存在就创建并启动 Flask
-if ! tmux has-session -t $SESSION 2>/dev/null; then
-    echo "Starting Flask in tmux session '$SESSION'..."
-    tmux new-session -d -s $SESSION "flask run --host=0.0.0.0 --port=5000 > flask.log 2>&1"
-else
-    echo "Flask already running in tmux session '$SESSION'"
-fi
+echo "Flask app started with nohup. Logs are in flask.log."

@@ -143,7 +143,7 @@ async def crawl_parallel_dispatcher(urls, config):
         if isinstance(result_container, list):
             results = result_container
         else:
-            async for res in result_container:
+            async for res in result_container: # pyright: ignore[reportGeneralTypeIssues]
                 results.append(res)
     total_time = time.perf_counter() - start_time
     print(f"Total time: {total_time} seconds")
@@ -211,8 +211,8 @@ async def crawl_by_table():
             )
         )
 
-        if result.success and result.tables:
-            print(f"Found {len(result.tables)} tables")
+        if result.success and result.tables: # type: ignore
+            print(f"Found {len(result.tables)} tables") # pyright: ignore[reportAttributeAccessIssue]
 
             for i, table in enumerate(result.tables):
                 print(f"\nTable {i+1}:")
