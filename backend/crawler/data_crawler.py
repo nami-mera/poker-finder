@@ -3,6 +3,9 @@ import os
 from urllib.parse import urlencode
 import json
 import time
+from datetime import datetime, timedelta
+
+
 from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, CacheMode
 from crawl4ai import JsonCssExtractionStrategy
 from crawl4ai.async_webcrawler import AsyncWebCrawler, CacheMode
@@ -11,11 +14,14 @@ from crawl4ai.async_dispatcher import MemoryAdaptiveDispatcher, RateLimiter
 from crawl4ai.extraction_strategy import JsonXPathExtractionStrategy
 
 BASE_URL = "https://pokerguild.jp/"
+start_date_from = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+start_date_to = start_date_from
+
 params = {
     # "tourneyname": "",
     # "venue": "",
-    # "start_date_from": "2025-08-14",
-    # "start_date_to": "2025-08-14",
+    "start_date_from": start_date_from,
+    "start_date_to": start_date_to,
     # "limit": "",
     # "game": "",
     # "exclude": "0"
