@@ -134,7 +134,7 @@ async def crawl_parallel_dispatcher(urls, config):
             max_retries=3,
             rate_limit_codes=[429, 503]
         ),
-        max_session_permit=50,
+        max_session_permit=3,
     )
     start_time = time.perf_counter()
     async with AsyncWebCrawler() as crawler:
