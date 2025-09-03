@@ -38,7 +38,7 @@ class Tournament(db.Model):
             "start_time": self.start_time,
             "late_time": self.late_time,
             "entry_fee": self.entry_fee,
-            "prizes_original": self.prizes_original,
+            # "prizes_original": self.prizes_original,
             "reward_categories": self.reward_categories,
             "reward_summary": self.reward_summary,
             "shop_id": self.shop_id,
