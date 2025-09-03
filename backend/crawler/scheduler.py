@@ -5,6 +5,7 @@ from pathlib import Path
 import logging
 import re
 import time
+import argparse
 
 from backend.crawler.data_crawler import crawl_tournament_details, crawl_init_links
 from backend.crawler.ai_agent import query_ai
@@ -98,8 +99,8 @@ def save_tournament_to_db():
             ai_data = file_data["ai_data"]
             md_data = file_data["md_data"]
             tournament = Tournament(
-                event_id = json_data["event_id"],
-                event_name = json_data["event_name"],
+                event_id = json_data["event_id"], # pyright: ignore[reportCallIssue]
+                event_name = json_data["event_name"], # type: ignore
                 event_link = json_data["event_link"],
                 entry_fee = json_data["entry_fee"],
                 shop_id = json_data["shop_id"],
@@ -126,11 +127,11 @@ def scan_file_ids(folder_path):
     return [f.name for f in Path(folder_path).iterdir() if f.is_file()]
 
 
-async def main():
+async def main(date):
     init_all_tournament = False
     saved_tourney_ids = scan_file_ids(DATA_PATH + "/tournament/json/")
     logging.info('saved_tourney_ids: ' + str(len(saved_tourney_ids)))
-    tourney_links, _ = await crawl_init_links()
+    tourney_links, _ = await crawl_init_links(date)
     logging.info('tourney_links: ' + str(len(tourney_links)))
 
     new_tourney_links = []
@@ -146,4 +147,9 @@ async def main():
         save_tournament_to_db()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # 获取命令行参数-date，传入方法里面
+    parser = argparse.ArgumentParser(description="Run the crawler scheduler.")
+    parser.add_argument("--date", type=str, required=True, help="The date to run the scheduler for (格式: YYYY-MM-DD)")
+    args = parser.parse_args()
+    date = args.date
+    asyncio.run(main(date))

@@ -30,7 +30,7 @@ SYSTEM_PROMPT = """
   金額はすべて整数で、単位は除く（例：1000円 → 1000）。
   prefecture（都道府県） が明記されていない場合は "東京都" をデフォルトで使用してください。
   reward_summary は複数の入場人数条件がある場合、最も多い人数帯に対応した内容を選んでください。
-  reward_summary は順位ごとに英文カンマで区切り、それ以外の数値にはカンマを入れないこと。
+  reward_summary は順位ごとに英文カンマで区切り、それ以外の数値にはカンマを入れないこと, 引用符を付けないこと。
   reward_categories は報酬内容をもとに、次のようなカテゴリ名を自動で判断してください：
   コイン（ポイント）
   チケット（例：JOPT, SPADIE, 戦国など）
@@ -97,6 +97,7 @@ if __name__ == "__main__":
       out_path = md_file.replace(".json", ".ai.json")
       os.makedirs(os.path.dirname(out_path), exist_ok=True)
       with open(out_path, 'w', encoding='utf-8') as f_out:
+        if json_output:
           f_out.write(json_output)
 
       print(f"✅ 处理完成：{md_file}")

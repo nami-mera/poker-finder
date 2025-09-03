@@ -14,19 +14,19 @@ from crawl4ai.async_dispatcher import MemoryAdaptiveDispatcher, RateLimiter
 from crawl4ai.extraction_strategy import JsonXPathExtractionStrategy
 
 BASE_URL = "https://pokerguild.jp/"
-start_date_from = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-start_date_to = start_date_from
+default_start_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
 
 params = {
     # "tourneyname": "",
     # "venue": "",
-    "start_date_from": start_date_from,
-    "start_date_to": start_date_to,
+    "start_date_from": default_start_date,
+    "start_date_to": default_start_date,
     # "limit": "",
     # "game": "",
     # "exclude": "0"
 }
 search_url = BASE_URL + "tourneys?" + urlencode(params)
+
 VERBOSE = False
 
 schema_of_shop_xpath = {
@@ -179,7 +179,7 @@ async def crawl_by_css():
                 extraction_strategy=JsonCssExtractionStrategy(schema),
             )
         )
-        data = json.loads(result.extracted_content)
+        data = json.loads(result.extracted_content) # type: ignore
         print(data)
     
 
@@ -204,7 +204,7 @@ async def crawl_by_xpath():
                 extraction_strategy=JsonXPathExtractionStrategy(schema, verbose=True)
             )
         )
-        data = json.loads(result.extracted_content)
+        data = json.loads(result.extracted_content) # pyright: ignore[reportAttributeAccessIssue]
         print(data)
 
 
@@ -220,7 +220,7 @@ async def crawl_by_table():
         if result.success and result.tables: # type: ignore
             print(f"Found {len(result.tables)} tables") # pyright: ignore[reportAttributeAccessIssue]
 
-            for i, table in enumerate(result.tables):
+            for i, table in enumerate(result.tables): # pyright: ignore[reportAttributeAccessIssue]
                 print(f"\nTable {i+1}:")
                 print(f"Caption: {table.get('caption', 'No caption')}")
                 print(f"Headers: {table['headers']}")
@@ -261,8 +261,19 @@ async def crawl_tournament_details(tournament_links):
     print('tourney_details: ' + str(len(tourney_details)))
     return tourney_details
 
+
 # 爬取tourney和shop的链接
-async def crawl_init_links():
+async def crawl_init_links(date):
+    params = {
+        # "tourneyname": "",
+        # "venue": "",
+        "start_date_from": date if date else default_start_date,
+        "start_date_to": date if date else default_start_date,
+        # "limit": "",
+        # "game": "",
+        # "exclude": "0"
+    }
+    search_url = BASE_URL + "tourneys?" + urlencode(params)
     return await crawl_links(search_url)
 
 
