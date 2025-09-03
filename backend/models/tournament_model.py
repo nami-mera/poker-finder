@@ -34,7 +34,7 @@ class Tournament(db.Model):
             "event_id": self.event_id,
             "event_name": self.event_name,
             "event_link": self.event_link,
-            "start_date": self.start_time.format() if self.start_date else None,
+            "start_date": self.start_date.format() if self.start_date else None,
             "start_time": self.start_time,
             "late_time": self.late_time,
             "entry_fee": self.entry_fee,
