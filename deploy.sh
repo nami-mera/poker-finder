@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# 进入脚本所在的目录
+cd ~/poker-finder
+source venv/bin/activate
+
 # 设置 Flask 运行入口和关闭调试
 export FLASK_APP=backend/server.py
 export FLASK_ENV=production
