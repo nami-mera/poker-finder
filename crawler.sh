@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # 进入脚本所在的目录
-cd ~/poker-finder
-source venv/bin/activate
+cd /home/ubuntu/poker-finder
+. venv/bin/activate
 
 # 获取天数参数，1=明天，2=后天，3=大后天，默认为1
 if [ -n "$1" ]; then
